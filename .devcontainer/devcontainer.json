@@ -1,27 +1,14 @@
 {
-  "customizations": {
-    "codespaces": {
-      "openFiles": [
-        "README.md"
-      ]
-    },
-    "vscode": {
-      // Set *default* container specific settings.json values on container create.
-      "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash"
-      },
-      // Add the IDs of extensions you want installed when the container is created.
-      "extensions": [
-        "GitHub.github-vscode-theme",
-        "ms-toolsai.jupyter",
-        "ms-python.python"
-        // Additional Extensions Here
-      ]
-    }
-  },
-  // Update welcome text and set terminal prompt to '$ '
-  "onCreateCommand": "echo PS1='\"$ \"' >> ~/.bashrc",
-  // Pull all branches
-  "postAttachCommand": "git pull --all"
+  "extensions": [
+    "GitHub.github-vscode-theme",
+    "ms-toolsai.jupyter",
+    "ms-python.python"
+    // Additional Extensions Here
+  ],
+  "features": {
+    "ghcr.io/va-h/devcontainers-features/uv:1": {}
+},
+  "onCreateCommand" : "[ -f requirements.txt ] && uv pip install -r requirements.txt; echo PS1='\"$ \"' >> ~/.bashrc", //Set Terminal Prompt to $
 }
+
 // DevContainer Reference: https://code.visualstudio.com/docs/remote/devcontainerjson-reference

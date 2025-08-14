@@ -1,0 +1,27 @@
+Metadata-Version: 2.4
+Name: EnsembleLearning
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: NOTICE
+Requires-Dist: drawdata>=0.3.6
+Requires-Dist: jupyterlab>=4.3.4
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: numpy>=2.2.1
+Requires-Dist: pandas
+Requires-Dist: pyarrow>=18.1.0
+Requires-Dist: scikit-learn>=1.6.1
+Requires-Dist: xgboost>=2.1.3
+Dynamic: license-file
+Dynamic: requires-python
+
+# Applied Machine Learning: Ensemble Learning (Personal Workspace)
+
+This repository is my **personal workspace** for the LinkedIn Learning course
+"Applied Machine Learning: Ensemble Learning" by Matt Harrison.  
+
+All code, notes, and experiments are set up using my **own Conda environment** and 
+Jupyter notebooks in **VSCode**, not the default Codespaces setup.  
+

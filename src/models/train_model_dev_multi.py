@@ -156,3 +156,41 @@ plt.ylim(0, 1)  # metrics are between 0–1
 plt.legend(title="Model")
 plt.tight_layout()
 plt.show()
+
+
+# --------------------------------
+# Table: Best model per metric
+# --------------------------------
+best_per_metric = {}
+
+# Loop through each metric we care about
+for metric in [
+    "mean_test_accuracy",
+    "mean_test_precision",
+    "mean_test_recall",
+    "mean_test_f1",
+    ]:
+    # 1. Find the index of the row in final_results where this metric is maximized
+    idx = final_results[metric].idxmax()
+    # 2. Get the row information: which model, what score, and what parameters
+    row = final_results.loc[idx, ["model", metric, "params"]]
+    # 3. Save it into the dictionary under the metric name
+    best_per_metric[metric] = row
+
+# Convert dictionary into a table for easy reading
+best_table = pd.DataFrame(best_per_metric).T
+
+# Flatten the 'params' dict into separate columns
+params_df = pd.json_normalize(best_table["params"])
+
+# Drop the original params column and merge flattened params
+best_table_clean = best_table.drop(columns="params").reset_index().join(params_df)
+
+# Rename for readability
+best_table_clean.rename(columns={"index": "metric"}, inplace=True)
+
+print("\n🏆 Best model per metric (flattened):")
+print(best_table_clean)
+
+best_table_clean.to_csv("best_models_per_metric.csv", index=False)
+print("📂 Exported to best_models_per_metric.csv")

@@ -1,10 +1,18 @@
 from data.load_dataset import load_clean_adult_dataset
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.compose import ColumnTransformee
+from sklearn.compose import ColumnTransformer
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import (
+    make_scorer,
+    precision_score,
+    recall_score,
+    f1_score,
+    accuracy_score,
+)
+
 
 from sklearn.pipeline import Pipeline
 
@@ -13,13 +21,17 @@ from sklearn.pipeline import Pipeline
 # --------------------------------
 
 
-# 1️⃣ Load data (X = features, y = target
+# Load data (X = features, y = target
 X, y = load_clean_adult_dataset()
 
-# 2️⃣ Identify categorical and numeric columns
+# Convert target to numeric (important for metrics like precision/recall/F1)
+# '>50K' → 1 (positive class), '<=50K' → 0 (negative class)
+y = y.map({">50K": 1, "<=50K": 0})
+
+# Identify categorical and numeric columns
 categorical_cols = X.select_dtypes(include=["object", "category"]).columns
 
-# 3️⃣ Preprocessor: only encode categorical variables
+# Preprocessor: only encode categorical variables
 # handle_unknown="ignore" ensures it won't crash on unseen categories in validation or prod
 preprocessor = ColumnTransformer(
     transformers=[
@@ -34,22 +46,16 @@ preprocessor = ColumnTransformer(
 )
 
 # --------------------------------
-#  Initialize model
+# Define pipeline
 # --------------------------------
+# 🚨 Why pipeline? During cross-validation, preprocessing is fit *only on training folds*
+# This avoids "data leakage" (encoder accidentally learning from validation data).
 
-rf = RandomForestClassifier(random_state=42)
-
-
-# --------------------------------
-#  Create pipeline
-# --------------------------------
-
-# 🚨 This is critical: during cross-validation, preprocessing happens *inside each fold*
-# so that the encoder never "sees" the validation data before transforming it.
+rf = RandomForestClassifier(random_state=42)  # initialize the model
 pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("model", rf)])
 
 # --------------------------------
-# Grid Search: Define Parameter Grid and Run Pipeline
+# Hyperparameter grid
 # --------------------------------
 
 param_grid = {
@@ -66,12 +72,32 @@ param_grid = {
     ],  # fraction of samples for each tree (bagging)
 }
 
-# Setup GridSearchCV
+# --------------------------------
+# Grid Search with multiple metrics
+# --------------------------------
+
+scoring = {
+    "accuracy": make_scorer(accuracy_score),
+    # Accuracy: proportion of correctly classified samples over all samples.
+    # Good general measure but can be misleading if data is imbalanced.
+    "precision": make_scorer(precision_score),
+    # Precision: proportion of positive predictions that are actually positive.
+    # Tells us how “trustworthy” the model’s positive predictions are.
+    "recall": make_scorer(recall_score),
+    # Recall (sensitivity): proportion of actual positives correctly identified.
+    # Tells us how good the model is at catching all positives.
+    "f1": make_scorer(f1_score),
+    # F1 score: harmonic mean of precision and recall.
+    # Balances false positives and false negatives; very useful for imbalanced data.
+}
+
+
 grid_search = GridSearchCV(
     pipeline,  # pipeline = preprocessing + model
     param_grid,  # parameters to try
     cv=5,  # 5-fold cross-validation
-    scoring="accuracy",  # metric to optimize
+    scoring=scoring,  # evaluate multiple metrics
+    refit="f1",  # refit final model using best F1 score
     n_jobs=-1,  # use all CPU cores
 )
 
@@ -95,14 +121,30 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-results = pd.DataFrame(grid_search.cv_results_)
+# Convert all CV results into a DataFrame for deeper analysis
+results_df = pd.DataFrame(grid_search.cv_results_)
+results_df.head()
 
-# show mean test score and params
-display(
-    results[["params", "mean_test_score", "std_test_score"]].sort_values(
-        by="mean_test_score", ascending=False
-    )
-)
+# Keep only the most useful columns
+# mean_test_X → the average X metric score across CV folds for this parameter combo.
+# std_test_X → how much the score varies across folds (i.e., stability of the model).
+
+results_df = results_df[
+    [
+        "params",
+        "mean_test_accuracy",
+        "std_test_accuracy",
+        "mean_test_precision",
+        "std_test_precision",
+        "mean_test_recall",
+        "std_test_recall",
+        "mean_test_f1",
+        "std_test_f1",
+        "rank_test_f1",  # use rank based on main metric of interest
+    ]
+].sort_values(by="mean_test_f1")
+
+print(results_df.head())
 
 
 # if you only varied n_estimators and max_depth

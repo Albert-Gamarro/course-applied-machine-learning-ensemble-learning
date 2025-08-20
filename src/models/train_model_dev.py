@@ -52,6 +52,7 @@ preprocessor = ColumnTransformer(
 # This avoids "data leakage" (encoder accidentally learning from validation data).
 
 rf = RandomForestClassifier(random_state=42)  # initialize the model
+
 pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("model", rf)])
 
 # --------------------------------
@@ -123,7 +124,6 @@ import matplotlib.pyplot as plt
 
 # Convert all CV results into a DataFrame for deeper analysis
 results_df = pd.DataFrame(grid_search.cv_results_)
-results_df.head()
 
 # Keep only the most useful columns
 # mean_test_X → the average X metric score across CV folds for this parameter combo.
@@ -142,21 +142,11 @@ results_df = results_df[
         "std_test_f1",
         "rank_test_f1",  # use rank based on main metric of interest
     ]
-].sort_values(by="mean_test_f1")
-
-print(results_df.head())
-
-
-# if you only varied n_estimators and max_depth
-pivot_table = results.pivot(
-    index="param_max_depth", columns="param_n_estimators", values="mean_test_score"
-)
-sns.heatmap(pivot_table, annot=True, fmt=".3f")
-plt.xlabel("n_estimators")
-plt.ylabel("max_depth")
-plt.show()
+].sort_values(by="mean_test_f1", ascending=False)
+top5 = results_df.head(5)
 
 
-# 6. Save the best model
+
+# Save the best model
 best_model = grid_search.best_estimator_
 joblib.dump(grid_search.best_estimator_, "best_random_forest.pkl")

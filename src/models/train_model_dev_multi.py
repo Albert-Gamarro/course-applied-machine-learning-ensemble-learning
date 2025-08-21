@@ -105,15 +105,19 @@ for model_name, config in models_and_grids.items():
 # Combine all models' results
 final_results = pd.concat(all_results, ignore_index=True)
 
-# Keep only useful cols
+# Keep only useful cols: all mean and std metrics
 final_results = final_results[
     [
         "model",
         "params",
         "mean_test_accuracy",
+        "std_test_accuracy",
         "mean_test_precision",
+        "std_test_precision",
         "mean_test_recall",
+        "std_test_recall",
         "mean_test_f1",
+        "std_test_f1",
         "rank_test_f1",
     ]
 ].sort_values(by="mean_test_f1", ascending=False)
@@ -123,74 +127,99 @@ print(final_results.head(10))
 
 
 # --------------------------------
-# Visualization: Best scores per model family
+# Analyzing the results
 # --------------------------------
-import matplotlib.pyplot as plt
-import seaborn as sns
 
+### STEP 1 - Identify the best hyperparameter set per metric ###
 
-summary = (
-    final_results.groupby("model")[
-        [
-            "mean_test_accuracy",
-            "mean_test_precision",
-            "mean_test_recall",
-            "mean_test_f1",
-        ]
-    ]
-    .max()  # best score for each metric within each model family
-    .reset_index()
-)
-
-print("\n📊 Best scores per model family:")
-print(summary)
-
-# Melt for plotting
-summary_melted = summary.melt(id_vars="model", var_name="metric", value_name="score")
-
-plt.figure(figsize=(8, 5))
-sns.barplot(data=summary_melted, x="metric", y="score", hue="model")
-plt.title("Best scores per model family")
-plt.ylabel("Score")
-plt.ylim(0, 1)  # metrics are between 0–1
-plt.legend(title="Model")
-plt.tight_layout()
-plt.show()
-
-
-# --------------------------------
-# Table: Best model per metric
-# --------------------------------
-best_per_metric = {}
-
-# Loop through each metric we care about
+best_rows = []
 for metric in [
     "mean_test_accuracy",
     "mean_test_precision",
     "mean_test_recall",
     "mean_test_f1",
-    ]:
-    # 1. Find the index of the row in final_results where this metric is maximized
-    idx = final_results[metric].idxmax()
-    # 2. Get the row information: which model, what score, and what parameters
-    row = final_results.loc[idx, ["model", metric, "params"]]
-    # 3. Save it into the dictionary under the metric name
-    best_per_metric[metric] = row
+]:
+    idx = final_results[metric].idxmax()  # row index of the best model for this metric
+    row = final_results.loc[idx].copy()  # copy row info
+    row["metric_winner"] = metric  # add column marking which metric it won
+    best_rows.append(row)
 
-# Convert dictionary into a table for easy reading
-best_table = pd.DataFrame(best_per_metric).T
+# Collect into DataFrame
+winners_df = pd.DataFrame(best_rows)
 
-# Flatten the 'params' dict into separate columns
-params_df = pd.json_normalize(best_table["params"])
 
-# Drop the original params column and merge flattened params
-best_table_clean = best_table.drop(columns="params").reset_index().join(params_df)
+### STEP 2 - Holistic analysis of these winners ###
+### Build a clean table with all info we need ###
 
-# Rename for readability
-best_table_clean.rename(columns={"index": "metric"}, inplace=True)
+# Flatten 'params' into separate columns
+params_df = pd.json_normalize(winners_df["params"])
 
-print("\n🏆 Best model per metric (flattened):")
-print(best_table_clean)
+# Merge with winners
+winners_clean = pd.concat([winners_df.reset_index(drop=True), params_df], axis=1)
 
-best_table_clean.to_csv("best_models_per_metric.csv", index=False)
-print("📂 Exported to best_models_per_metric.csv")
+
+# Reorder columns for readability
+cols_order = (
+    ["metric_winner", "model"]
+    + [c for c in winners_clean.columns if "mean_test" in c]
+    + [c for c in winners_clean.columns if "std_test" in c]
+    + [
+        c
+        for c in winners_clean.columns
+        if c not in ["metric_winner", "model"] and "mean_" not in c and "std_" not in c
+    ]
+)
+winners_clean = winners_clean[cols_order]
+
+print("\n🏆 Best models per metric (full comparison):")
+print(winners_clean)
+
+
+# --------------------------------
+# Heatmap: Performance across metrics
+# --------------------------------
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+metrics = [
+    "mean_test_accuracy",
+    "mean_test_precision",
+    "mean_test_recall",
+    "mean_test_f1",
+]
+
+perf_matrix = winners_clean.set_index("metric_winner")[metrics]
+
+plt.figure(figsize=(8, 5))
+sns.heatmap(
+    perf_matrix, annot=True, cmap="YlGnBu", fmt=".3f", cbar_kws={"label": "Score"}
+)
+plt.title("Performance Heatmap (Higher is Better)")
+plt.ylabel("Winning Config (per metric)")
+plt.xlabel("Metric")
+plt.show()
+
+# --------------------------------
+# Heatmap: Robustness (std across folds)
+# --------------------------------
+std_metrics = [
+    "std_test_accuracy",
+    "std_test_precision",
+    "std_test_recall",
+    "std_test_f1",
+]
+
+std_matrix = winners_clean.set_index("metric_winner")[std_metrics]
+
+plt.figure(figsize=(8, 5))
+sns.heatmap(
+    std_matrix,
+    annot=True,
+    cmap="YlOrRd_r",
+    fmt=".3f",
+    cbar_kws={"label": "Std (Lower is Better)"},
+)
+plt.title("Robustness Heatmap (Lower is Better)")
+plt.ylabel("Winning Config (per metric)")
+plt.xlabel("Metric")
+plt.show()

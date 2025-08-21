@@ -8,8 +8,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from xgboost import XGBClassifier
 
 # --------------------------------
 # 2. Load dataset
@@ -17,6 +17,7 @@ from sklearn.metrics import accuracy_score
 adult_data = fetch_openml(data_id=1590, as_frame=True)
 X = adult_data.data
 y = adult_data.target
+y = y.map({">50K": 1, "<=50K": 0})
 
 # Convert object columns to category
 for col in X.select_dtypes(include="object").columns:
@@ -48,7 +49,19 @@ preprocessor = ColumnTransformer(
 pipeline = Pipeline(
     steps=[
         ("preprocessor", preprocessor),
-        ("classifier", DecisionTreeClassifier(random_state=42)),
+        (
+            "classifier",
+            XGBClassifier(
+                random_state=42,
+                n_estimators=100,
+                learning_rate=0.3,
+                max_depth=10,
+                gamma=5,
+                subsample=0.8,
+                use_label_encoder=False,
+                eval_metric="logloss",
+            ),
+        ),
     ]
 )
 
@@ -63,6 +76,15 @@ X_train, X_test, y_train, y_test = train_test_split(
 # 7. Fit model and evaluate
 # --------------------------------
 pipeline.fit(X_train, y_train)
+
 predictions = pipeline.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
-print(f"Model Accuracy: {accuracy:.3f}")
+precision = precision_score(y_test, predictions)
+recall = recall_score(y_test, predictions)
+f1 = f1_score(y_test, predictions)
+
+print(f"Prod Model Evaluation:")
+print(f"Accuracy:  {accuracy:.3f}")
+print(f"Precision: {precision:.3f}")
+print(f"Recall:    {recall:.3f}")
+print(f"F1-score:  {f1:.3f}")

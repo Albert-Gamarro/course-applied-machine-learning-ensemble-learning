@@ -7,7 +7,12 @@
 ## 1. Project Overview
 
 **Overview:**  
-While the course teaches ensemble ML models, this project focuses on **structuring experimentation into reusable, modular workflows**. The goal is to transform ad-hoc exercises into a process that supports **efficient, informed decision-making** in real-world ML projects.  
+While the course teaches ensemble ML models through the `ensembles.ipynb` notebook, this project focuses on **structuring experimentation into reusable, modular workflows inside the `src/` folder**. The goal is to transform ad-hoc exercises into a process that supports **efficient, informed decision-making** in real-world ML projects.  
+
+The notebook is kept as the **reference learning file**, while the `src/` scripts are structured to support a **real ML workflow**.
+
+- **ensembles.ipynb:** Original course file, used for following along with exercises and experiments.  
+- **src/:** Scripts designed for the **experimentation and evaluation phase** of a real ML lifecycle. These scripts are modular, reusable, and closer to production standards.
 
 This project emphasizes **workflow design, result analysis, and scalability**, creating a foundation for future extensions to production-ready ML solutions.
 

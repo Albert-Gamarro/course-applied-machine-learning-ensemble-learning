@@ -20,6 +20,7 @@ from sklearn.metrics import (
 )
 
 import pandas as pd
+import numpy as np
 
 # --------------------------------
 # Load data
@@ -116,14 +117,15 @@ for model_name, config in models_and_grids.items():
     results_df = pd.DataFrame(grid_search.cv_results_)
     # overfitting detection using main metric: F1 score is the safest choice for this case
     results_df["overfit"] = results_df["mean_train_f1"] - results_df["mean_test_f1"]
-    results_df["overfit_flg"] = results_df["overfit"] > 0.05  # flag those with >5% overfit
+    results_df["overfit_flg"] = (
+        results_df["overfit"] > 0.05
+    )  # flag those with >5% overfit
 
     results_df["model"] = model_name
     all_results.append(results_df)
 
 # Combine all models' results
 final_results = pd.concat(all_results, ignore_index=True)
-
 
 
 # ------------------------------------------
@@ -146,6 +148,7 @@ final_results_none_overfit = final_results_none_overfit[
         "std_test_recall",
         "mean_test_f1",
         "std_test_f1",
+        "mean_train_f1",
         "overfit",
         "overfit_flg",
     ]
@@ -153,9 +156,6 @@ final_results_none_overfit = final_results_none_overfit[
 
 print("\n🏆 Top 10 model + parameter combos across all models:")
 print(final_results.head(10))
-
-
-
 
 
 ### STEP 2 - Identify the best hyperparameter set per metric ###
@@ -252,4 +252,55 @@ sns.heatmap(
 plt.title("Robustness Heatmap (Lower is Better)")
 plt.ylabel("Winning Config (per metric)")
 plt.xlabel("Metric")
+plt.show()
+
+
+# --------------------------------
+# Overfitting per best models
+# --------------------------------
+
+
+plt.figure(figsize=(12, 7))
+sns.set_style("whitegrid")
+
+bar_width = 0.35
+indices = np.arange(len(winners_df))
+
+# Bars for train and test F1
+plt.bar(
+    indices - bar_width / 2,
+    winners_df["mean_train_f1"],
+    width=bar_width,
+    label="Train F1",
+    color="skyblue",
+)
+plt.bar(
+    indices + bar_width / 2,
+    winners_df["mean_test_f1"],
+    width=bar_width,
+    label="Test F1",
+    color="salmon",
+)
+
+# Highlight overfitting
+for i, overfit in enumerate(winners_df["overfit"]):
+    if overfit > 0.05:
+        plt.text(
+            i,
+            max(winners_df["mean_train_f1"].iloc[i], winners_df["mean_test_f1"].iloc[i])
+            + 0.01,
+            "⚠️ Overfit",
+            ha="center",
+            fontsize=10,
+            color="red",
+        )
+
+# X-axis labels
+plt.xticks(indices, winners_df["model"], rotation=30, ha="right")
+plt.ylabel("F1 Score")
+plt.title("Train vs Test F1 Scores for Top Models")
+
+# Legend outside plot, clearly visible
+plt.legend(loc="upper left", bbox_to_anchor=(1.05, 1))
+plt.tight_layout()  # automatically adjust spacing
 plt.show()

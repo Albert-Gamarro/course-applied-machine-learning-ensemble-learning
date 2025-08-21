@@ -150,3 +150,70 @@ top5 = results_df.head(5)
 # Save the best model
 best_model = grid_search.best_estimator_
 joblib.dump(grid_search.best_estimator_, "best_random_forest.pkl")
+
+
+
+
+
+# --------------------------------
+# Experiment: Stacking Classifier
+# --------------------------------
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    AdaBoostClassifier,
+    StackingClassifier,
+)
+from sklearn.model_selection import cross_validate
+
+# Define base learners
+estimators = [
+    ("dt", DecisionTreeClassifier(max_depth=3)),
+    ("knn", KNeighborsClassifier(n_neighbors=3)),
+    ("rf", RandomForestClassifier(random_state=42)),
+    ("ada", AdaBoostClassifier(random_state=42)),
+]
+
+# Define stacking model
+# stacking_clf = StackingClassifier(
+#     estimators=estimators,
+#     final_estimator=RandomForestClassifier(
+#         n_estimators=50, random_state=42
+#     ),  # meta-learner - defaults to LogisticRegression
+#     n_jobs=-1,
+# )
+stacking_clf = StackingClassifier(
+    estimators=estimators
+)  
+
+# Wrap inside pipeline (with preprocessing!)
+stacking_pipeline = Pipeline(
+    steps=[("preprocessor", preprocessor), ("model", stacking_clf)]
+)
+
+# Evaluate with cross-validation (using same metrics setup)
+cv_results = cross_validate(
+    stacking_pipeline, X, y, cv=3, scoring=scoring, return_train_score=True, n_jobs=-1
+)
+
+# Store results in dataframe (consistent with your winners_df logic)
+stacking_results = pd.DataFrame(
+    {
+        "model": ["StackingClassifier"],
+        "mean_test_accuracy": [cv_results["test_accuracy"].mean()],
+        "mean_test_precision": [cv_results["test_precision"].mean()],
+        "mean_test_recall": [cv_results["test_recall"].mean()],
+        "mean_test_f1": [cv_results["test_f1"].mean()],
+        "std_test_accuracy": [cv_results["test_accuracy"].std()],
+        "std_test_precision": [cv_results["test_precision"].std()],
+        "std_test_recall": [cv_results["test_recall"].std()],
+        "std_test_f1": [cv_results["test_f1"].std()],
+        "overfit": [cv_results["train_f1"].mean() - cv_results["test_f1"].mean()],
+        "overfit_flg": [
+            (cv_results["train_f1"].mean() - cv_results["test_f1"].mean()) > 0.05
+        ],
+    }
+)
+
+print(stacking_results)

@@ -31,12 +31,19 @@ This project emphasizes **workflow design, result analysis, and scalability**, c
 - **Dataset Loading & Preprocessing:** Standardized scripts to handle initial dataset preparation.  
 - **train_model_dev:** Quick experimentation with single models.  
 - **train_model_dev_multi:** Multi-model evaluation for **comparative analysis** across ensemble techniques (bagging, boosting, stacking).  
+   - Includes **stacking as an experiment**, following professional practice: tested but not adopted unless outperforming individual models.  
 - **train_model_prod:** Production-oriented training and evaluation with train/test splits, ensuring **reproducibility and stability**.
+
 
 ### 3.2 Results Analysis & Key Insights
 - Evaluated **metrics and standard deviations** to understand both performance and stability.  
+- **Overfitting diagnostics:** checked train-test score gaps for the main metric (F1). Models with large gaps were excluded, ensuring only **generalizable winners** are considered.  
 - **Heatmaps** allow rapid visualization of best-performing models across metrics and hyperparameter combinations.  
-- **Why it matters:** In production, high average scores alone are not enough. Models with **low variability (std)** across splits are more reliable and reduce operational risk.
+- **Why it matters:** In production, high average scores alone are not enough. Models with **low variability (std)** and **low overfitting** are more reliable and reduce operational risk.  
+
+**Example Insight:**  
+From the adult dataset, models winning in **F1-score and accuracy** were strongest overall. Due to dataset imbalance, **F1-score** was prioritized — balancing precision and recall for **business-relevant decisions**.
+
 
 **Example Insight:**  
 From the adult dataset, models winning in **F1-score and accuracy** were strongest overall. Due to dataset imbalance, **F1-score** was prioritized — balancing precision and recall for **business-relevant decisions**.
@@ -54,15 +61,15 @@ From the adult dataset, models winning in **F1-score and accuracy** were stronge
 ## 5. Conclusion & Value
 
 - **Transformed ad-hoc experimentation into scalable, repeatable workflows.**  
-- **Balanced performance and stability** to select robust models, mitigating production risk.  
+- **Balanced performance, stability, and overfitting checks** to select robust models, mitigating production risk.  
 - Built a **framework adaptable for future datasets and model iterations**, supporting team efficiency.  
 - Demonstrates **strategic understanding of ML experimentation in a business context**, aligning technical insight with actionable decision-making.
 
 ---
 
-**Key Takeaways for Leaders & Recruiters:**  
+**Key Takeaways for Stakeholders & Teams:**  
 
 - Clear process orientation: **modular, reproducible, and scalable workflows**.  
-- Insightful model selection: **stability matters as much as average metrics**.  
+- Insightful model selection: **stability and overfitting checks matter as much as raw performance metrics**.  
 - Team-ready: Scripts and workflows allow **others to adopt, reproduce, and extend results efficiently**.  
 - Business-relevant decisions: Analysis connects **technical results to practical, high-level impact**.

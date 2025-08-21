@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 
 # Models
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from xgboost import XGBClassifier
 
 # Search & metrics
 from sklearn.model_selection import GridSearchCV
@@ -61,6 +62,19 @@ models_and_grids = {
             "model__subsample": [1.0, 0.8],
         },
     },
+    "XGBoost": {
+        "model": XGBClassifier(
+            enable_categorical=True,
+            eval_metric="logloss",
+            random_state=42,
+        ),
+        "params": {
+            "model__max_depth": [3, 6, 10],
+            "model__learning_rate": [0.01, 0.1, 0.3],
+            "model__subsample": [0.6, 0.8, 1.0],
+            "model__gamma": [0, 1, 5],
+        },
+    },
 }
 
 # Scoring metrics
@@ -89,6 +103,7 @@ for model_name, config in models_and_grids.items():
         cv=3,  # keep 3 folds for speed (can be 5 in serious runs)
         scoring=scoring,
         refit="f1",  # optimize by F1
+        return_train_score=True,  # store train scores for overfitting analysis
         n_jobs=-1,
     )
 
@@ -99,14 +114,27 @@ for model_name, config in models_and_grids.items():
 
     # store results
     results_df = pd.DataFrame(grid_search.cv_results_)
+    # overfitting detection using main metric: F1 score is the safest choice for this case
+    results_df["overfit"] = results_df["mean_train_f1"] - results_df["mean_test_f1"]
+    results_df["overfit_flg"] = results_df["overfit"] > 0.05  # flag those with >5% overfit
+
     results_df["model"] = model_name
     all_results.append(results_df)
 
 # Combine all models' results
 final_results = pd.concat(all_results, ignore_index=True)
 
+
+
+# ------------------------------------------
+# Analyzing the results
+# -------------------------------------------
+
+### STEP 1 - Overfitting: Performance across metricsc ###
+# Keep only rows flagged as overfitting
+final_results_none_overfit = final_results[final_results["overfit_flg"] == False]
 # Keep only useful cols: all mean and std metrics
-final_results = final_results[
+final_results_none_overfit = final_results_none_overfit[
     [
         "model",
         "params",
@@ -118,7 +146,8 @@ final_results = final_results[
         "std_test_recall",
         "mean_test_f1",
         "std_test_f1",
-        "rank_test_f1",
+        "overfit",
+        "overfit_flg",
     ]
 ].sort_values(by="mean_test_f1", ascending=False)
 
@@ -126,11 +155,10 @@ print("\n🏆 Top 10 model + parameter combos across all models:")
 print(final_results.head(10))
 
 
-# --------------------------------
-# Analyzing the results
-# --------------------------------
 
-### STEP 1 - Identify the best hyperparameter set per metric ###
+
+
+### STEP 2 - Identify the best hyperparameter set per metric ###
 
 best_rows = []
 for metric in [
@@ -139,8 +167,10 @@ for metric in [
     "mean_test_recall",
     "mean_test_f1",
 ]:
-    idx = final_results[metric].idxmax()  # row index of the best model for this metric
-    row = final_results.loc[idx].copy()  # copy row info
+    idx = final_results_none_overfit[
+        metric
+    ].idxmax()  # row index of the best model for this metric
+    row = final_results_none_overfit.loc[idx].copy()  # copy row info
     row["metric_winner"] = metric  # add column marking which metric it won
     best_rows.append(row)
 
@@ -148,7 +178,7 @@ for metric in [
 winners_df = pd.DataFrame(best_rows)
 
 
-### STEP 2 - Holistic analysis of these winners ###
+### STEP 3 - Holistic analysis of these winners ###
 ### Build a clean table with all info we need ###
 
 # Flatten 'params' into separate columns

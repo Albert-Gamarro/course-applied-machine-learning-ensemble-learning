@@ -58,7 +58,6 @@ pipeline = Pipeline(
                 max_depth=10,
                 gamma=5,
                 subsample=0.8,
-                use_label_encoder=False,
                 eval_metric="logloss",
             ),
         ),
@@ -88,3 +87,14 @@ print(f"Accuracy:  {accuracy:.3f}")
 print(f"Precision: {precision:.3f}")
 print(f"Recall:    {recall:.3f}")
 print(f"F1-score:  {f1:.3f}")
+
+
+# --------------------------------
+# 8. Save model
+# --------------------------------
+
+import joblib
+
+# Save the pipeline
+joblib.dump(pipeline, "../../models/xgb_pipeline_v1.joblib")
+print("Model saved to ../../models/xgb_pipeline_v1.joblib")

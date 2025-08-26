@@ -1,0 +1,65 @@
+cv_folds: 3
+models:
+  GradientBoosting:
+    class: sklearn.ensemble.GradientBoostingClassifier
+    params:
+      learning_rate:
+        high: 0.2
+        low: 0.05
+        type: float
+      max_depth:
+        high: 7
+        low: 3
+        type: int
+      n_estimators:
+        high: 200
+        low: 50
+        type: int
+      subsample:
+        high: 1.0
+        low: 0.6
+        type: float
+  RandomForest:
+    class: sklearn.ensemble.RandomForestClassifier
+    params:
+      max_depth:
+        high: 30
+        low: 10
+        step: 5
+        type: int
+      max_features:
+        choices:
+        - sqrt
+        - log2
+        type: categorical
+      max_samples:
+        high: 1.0
+        low: 0.6
+        type: float
+      n_estimators:
+        high: 200
+        low: 50
+        type: int
+  XGBoost:
+    class: xgboost.XGBClassifier
+    params:
+      gamma:
+        high: 5
+        low: 0
+        type: int
+      learning_rate:
+        high: 0.3
+        low: 0.01
+        type: float
+      max_depth:
+        high: 10
+        low: 3
+        type: int
+      subsample:
+        high: 1.0
+        low: 0.6
+        type: float
+optuna_trials: 50
+output_dir: models/
+random_seed: 42
+results_dir: results/

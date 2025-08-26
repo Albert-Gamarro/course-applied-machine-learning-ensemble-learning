@@ -86,6 +86,12 @@ scoring = {
     "f1": make_scorer(f1_score),
 }
 
+
+# ----------------------------------------------------
+# Analysing the models
+# ----------------------------------------------------
+
+
 # --------------------------------
 # Run GridSearch for each model
 # --------------------------------
@@ -128,9 +134,9 @@ for model_name, config in models_and_grids.items():
 final_results = pd.concat(all_results, ignore_index=True)
 
 
-# ------------------------------------------
-# Analyzing the results
-# -------------------------------------------
+# ====================================================
+# Analyzing GridSearch results
+# ====================================================
 
 ### STEP 1 - Overfitting: Performance across metricsc ###
 # Keep only rows flagged as overfitting
@@ -204,10 +210,8 @@ winners_clean = winners_clean[cols_order]
 print("\n🏆 Best models per metric (full comparison):")
 print(winners_clean)
 
+### STEP 4: Heatmap: Performance across metrics ###
 
-# --------------------------------
-# Heatmap: Performance across metrics
-# --------------------------------
 import matplotlib.pyplot as plt
 import seaborn as sns
 

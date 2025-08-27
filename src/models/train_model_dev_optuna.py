@@ -152,14 +152,17 @@ for model_name, model_config in config["models"].items():
     except Exception as e:
         print(f"Error running {model_name}: {e}")
         continue
+    print("\n✅ All models processed.")
 
 # Combine and save results
 final_results = pd.concat(all_results, ignore_index=True)
 
-
 # Save config and results
 results_dir = save_experiment(all_results, config, results_root=config["results_dir"])
 
+print("\n--- Step 1: Sanity Check ---")
+model_counts = final_results["model"].value_counts()
+print("Number of trials per model:\n", model_counts)
 
 # --------------------------------
 # Analysing Optuna results
@@ -167,3 +170,86 @@ results_dir = save_experiment(all_results, config, results_root=config["results_
 
 non_overfitted = final_results[final_results["overfit_flg"] == False]
 print(f"\nNumber of non-overfitted trials: {len(non_overfitted)}")
+
+print(non_overfitted["model"].value_counts())
+
+
+non_overfitted.groupby("model")[
+    [
+        "mean_test_f1",
+        "mean_test_accuracy",
+        "mean_test_precision",
+        "mean_test_recall",
+        "overfit",
+    ]
+].describe()
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+# Boxplots (overfit distributions): Compare train vs test F1 visually
+plt.figure(figsize=(12, 6))
+sns.boxplot(x="model", y="mean_train_f1", data=final_results, color="skyblue")
+sns.boxplot(x="model", y="mean_test_f1", data=final_results, color="salmon")
+plt.ylabel("F1 Score")
+plt.title("Train vs Test F1 Scores (All Trials)")
+plt.legend(["Train F1", "Test F1"])
+plt.savefig(os.path.join(results_dir, "train_vs_test_f1.png"))
+plt.plot()
+
+plt.figure(figsize=(8, 5))
+sns.boxplot(data=final_results, x="model", y="overfit")
+plt.axhline(0.05, color="red", linestyle="--", label="Overfit Threshold")
+plt.ylabel("Train-Test F1 Gap (Overfit)")
+plt.title("Overfit Distribution per Model")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+
+### Line plots of train vs test F1 per trial per model
+plt.figure(figsize=(10, 6))
+for model in final_results["model"].unique():
+    df_model = final_results[final_results["model"] == model]
+    plt.plot(
+        df_model.index,
+        df_model["mean_train_f1"],
+        marker="o",
+        label=f"{model} Train",
+        alpha=0.7,
+    )
+    plt.plot(
+        df_model.index,
+        df_model["mean_test_f1"],
+        marker="x",
+        label=f"{model} Test",
+        alpha=0.7,
+    )
+
+plt.xlabel("Trial Index")
+plt.ylabel("F1 Score")
+plt.title("Train vs Test F1 per Trial")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+
+### Scatter plot with overfit threshold line
+
+sns.scatterplot(
+    data=final_results,
+    x="mean_test_f1",
+    y="overfit",
+    hue="model",
+    size="mean_test_accuracy",
+    sizes=(50, 200),
+)
+plt.axhline(0.05, color="red", linestyle="--", label="Overfit Threshold")
+plt.xlabel("Test F1")
+plt.ylabel("Train-Test F1 Gap (Overfit)")
+plt.title("Overfit vs Test Performance")
+plt.tight_layout()
+plt.show()

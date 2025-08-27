@@ -22,6 +22,7 @@ def create_objective(pipeline, X, y, model_name, param_ranges, scoring, cv_folds
     """
 
     print(f"Scoring keys received in create_objective: {list(scoring.keys())}")
+    print(f"Parameter ranges for {model_name}: {param_ranges}")
 
     def objective(trial):
         """

@@ -190,14 +190,20 @@ import matplotlib.pyplot as plt
 
 
 # Boxplots (overfit distributions): Compare train vs test F1 visually
-plt.figure(figsize=(12, 6))
-sns.boxplot(x="model", y="mean_train_f1", data=final_results, color="skyblue")
-sns.boxplot(x="model", y="mean_test_f1", data=final_results, color="salmon")
-plt.ylabel("F1 Score")
-plt.title("Train vs Test F1 Scores (All Trials)")
-plt.legend(["Train F1", "Test F1"])
-plt.savefig(os.path.join(results_dir, "train_vs_test_f1.png"))
-plt.plot()
+
+plt.figure(figsize=(10, 6))
+final_melt = final_results.melt(
+    id_vars=["model"],
+    value_vars=["mean_train_f1", "mean_test_f1"],
+    var_name="Dataset",
+    value_name="F1 Score",
+)
+sns.boxplot(x="model", y="F1 Score", hue="Dataset", data=final_melt)
+plt.title("Train vs Test F1 Distribution per Model")
+plt.legend(title="Dataset")
+plt.tight_layout()
+plt.show()
+
 
 plt.figure(figsize=(8, 5))
 sns.boxplot(data=final_results, x="model", y="overfit")

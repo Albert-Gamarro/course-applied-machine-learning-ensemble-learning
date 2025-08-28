@@ -277,22 +277,3 @@ plt.ylabel("Train-Test F1 Gap (Overfit)")
 plt.title("Overfit vs Test Performance")
 plt.tight_layout()
 plt.show()
-
-
-
-
-plt.figure(figsize=(8, 6))
-sns.scatterplot(
-    x="overfit",
-    y="mean_test_f1",
-    hue="model",
-    size="mean_test_precision",
-    sizes=(50, 200),
-    data=final_results,
-)
-plt.axvline(x=0.05, color="red", linestyle="--", label="Overfit Threshold (0.05)")
-plt.xlabel("Overfit (Train F1 - Test F1)")
-plt.ylabel("Test F1 Score")
-plt.title("Overfit vs Test F1 Score (Size: Precision)")
-plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-plt.show()

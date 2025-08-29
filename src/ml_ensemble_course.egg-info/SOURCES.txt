@@ -9,5 +9,7 @@ src/ml_ensemble_course.egg-info/SOURCES.txt
 src/ml_ensemble_course.egg-info/dependency_links.txt
 src/ml_ensemble_course.egg-info/top_level.txt
 src/models/__init__.py
-src/models/train_model_dev.py
+src/models/train_model_dev_multi.py
+src/models/train_model_dev_optuna.py
+src/models/train_model_dev_pg.py
 src/models/train_model_prod.py

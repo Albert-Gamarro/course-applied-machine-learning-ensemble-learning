@@ -4,6 +4,8 @@ import yaml
 import pandas as pd
 import joblib
 import datetime
+import ast
+import json
 
 
 # Get project root
@@ -60,3 +62,19 @@ def save_experiment(all_results, studies, config, results_root="results"):
 
     print(f"✅ Results saved in {results_dir}")
     return results_dir
+
+
+def parse_params(param_str):
+    if isinstance(param_str, str):
+        try:
+            # first try ast.literal_eval
+            return ast.literal_eval(param_str)
+        except (ValueError, SyntaxError):
+            # if it fails, json.loads (in case is a json)
+            try:
+                return json.loads(param_str)
+            except (ValueError, json.JSONDecodeError):
+                # both failed, return empty dict
+                return {}
+    # if not a string, return empty dict
+    return {}

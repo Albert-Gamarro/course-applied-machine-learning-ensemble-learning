@@ -1,64 +1,64 @@
-experiment_name: "v1_initial_run"
+experiment_name: "v2_run"
 random_seed: 42
 cv_folds: 3
-optuna_trials: 50
+optuna_trials: 35
 output_dir: models/
 results_dir: results/
 models:
-  RandomForest:
-    class: sklearn.ensemble.RandomForestClassifier
-    params:
-      n_estimators:
-        type: int
-        low: 50
-        high: 200
-      max_depth:
-        type: int
-        low: 10
-        high: 30
-        step: 5
-      max_features:
-        type: categorical
-        choices: ["sqrt", "log2"]
-      max_samples:
-        type: float
-        low: 0.6
-        high: 1.0
+  # RandomForest:
+  #   class: sklearn.ensemble.RandomForestClassifier
+  #   params:
+  #     n_estimators:
+  #       type: int
+  #       low: 50
+  #       high: 200
+  #     max_depth:
+  #       type: int
+  #       low: 10
+  #       high: 30
+  #       step: 5
+  #     max_features:
+  #       type: categorical
+  #       choices: ["sqrt", "log2"]
+  #     max_samples:
+  #       type: float
+  #       low: 0.6
+  #       high: 1.0
   GradientBoosting:
     class: sklearn.ensemble.GradientBoostingClassifier
     params:
       n_estimators:
         type: int
-        low: 50
+        low: 100
         high: 200
       learning_rate:
         type: float
-        low: 0.05
+        low: 0.1
         high: 0.2
       max_depth:
         type: int
         low: 3
-        high: 7
+        high: 5
       subsample:
         type: float
         low: 0.6
-        high: 1.0
+        high: 0.9
   XGBoost:
     class: xgboost.XGBClassifier
     params:
       max_depth:
         type: int
         low: 3
-        high: 10
+        high: 6
       learning_rate:
         type: float
-        low: 0.01
+        low: 0.2
         high: 0.3
       subsample:
         type: float
         low: 0.6
-        high: 1.0
+        high: 0.9
       gamma:
         type: int
-        low: 0
+        low: 3
         high: 5

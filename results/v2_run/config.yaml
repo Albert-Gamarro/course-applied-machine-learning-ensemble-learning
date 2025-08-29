@@ -1,0 +1,45 @@
+cv_folds: 3
+experiment_name: v2_run
+models:
+  GradientBoosting:
+    class: sklearn.ensemble.GradientBoostingClassifier
+    params:
+      learning_rate:
+        high: 0.2
+        low: 0.1
+        type: float
+      max_depth:
+        high: 5
+        low: 3
+        type: int
+      n_estimators:
+        high: 200
+        low: 100
+        type: int
+      subsample:
+        high: 0.9
+        low: 0.6
+        type: float
+  XGBoost:
+    class: xgboost.XGBClassifier
+    params:
+      gamma:
+        high: 5
+        low: 3
+        type: int
+      learning_rate:
+        high: 0.3
+        low: 0.2
+        type: float
+      max_depth:
+        high: 6
+        low: 3
+        type: int
+      subsample:
+        high: 0.9
+        low: 0.6
+        type: float
+optuna_trials: 35
+output_dir: models/
+random_seed: 42
+results_dir: results/

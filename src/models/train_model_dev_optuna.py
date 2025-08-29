@@ -28,6 +28,7 @@ with open(config_path, "r") as f:
 
 print(f"Models in config: {list(config['models'].keys())}")
 
+
 # --------------------------------
 # Load data
 # --------------------------------
